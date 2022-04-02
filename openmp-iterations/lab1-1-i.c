@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -200,6 +201,8 @@ int hasSolution(vector_t* yn, vector_t* b) {
 // #======# Main #======#
 
 int main(int argc, char* argv[]) {
+    int num_threads = atoi(argv[1]);
+
     uint64_t N;
     if(!scanf("%I64u", &N)) return BAD_INPUT;
 
