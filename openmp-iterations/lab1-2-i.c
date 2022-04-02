@@ -115,7 +115,7 @@ STATE scalarDotVectors(vector_t* a, vector_t* b, double* dst) {
     uint64_t N = MIN(a->N, b->N);
 
     double sum = 0;
-    #pragma omp for reduction(+:sum) schedule(static, N / omp_get_num_threads)
+    #pragma omp shared(sum) for reduction(+:sum) schedule(static, N / omp_get_num_threads()) 
     for(uint64_t i = 0; i < N; ++i) {
         sum += a->data[i]*b->data[i];
     }
@@ -205,6 +205,8 @@ int hasSolution(vector_t* yn, vector_t* b) {
 // #======# Main #======#
 
 int main(int argc, char* argv[]) {
+    int num_threads = atoi(argv[1]);
+
     uint64_t N;
     if(!scanf("%I64u", &N)) return BAD_INPUT;
 
@@ -237,7 +239,7 @@ int main(int argc, char* argv[]) {
     int i = 0;
 
     double start = omp_get_wtime();
-    #pragma omp parallel num_threads(24) shared(A, x, b, yn, tn, state, i)
+    #pragma omp parallel num_threads(num_threads) shared(A, x, b, yn, tn, state, i)
     {
     do {
         CHANGE_STATE(state, calculateYn(&A, &x, &b, &yn));
@@ -247,6 +249,7 @@ int main(int argc, char* argv[]) {
     }
 
     double end = omp_get_wtime();
+
 
     if(state == SUCCESS && i < ITERATION_COUNT) {
         printf("Found solution:\n");
