@@ -98,7 +98,11 @@ int main(int argc, char* argv[]) {
 
     matrix_fill(A, Nx, Ny);
 
-    FILE *out = freopen("./data/input.txt", "w", stdout);
+    char PREFIX[100] = "./data/input/";
+    char POSTFIX[5] = ".txt";
+    char* data_name = strcat(strcat(strcat(strcat(PREFIX, argv[1]), "-"), argv[2]), POSTFIX);
+
+    FILE *out = freopen(data_name, "w", stdout);
     printf("%d\n", N);
     matrix_print(A, N);
 
