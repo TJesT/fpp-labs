@@ -1,0 +1,1 @@
+gnuplot -e "set size ratio -1 ; set terminal qt $1 ; plot 'data/result/$2-$3/$1.dat' binary array=($2,$3) format='%lf' with image ; pause -1 'Hit return to continue '"

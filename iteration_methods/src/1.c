@@ -201,8 +201,8 @@ int main(int argc, char* argv[]) {
     clock_gettime(CLOCK_MONOTONIC_RAW, &end);
 
     if(i < ITERATION_COUNT) {
-        printf("Found solution:\n");
-        vector_print(x, N);
+        // printf("Found solution:\n");
+        // vector_print(x, N);
     } else {
         printf("Hadn't find solution: in %d iterations :c\n", ITERATION_COUNT);
     }
