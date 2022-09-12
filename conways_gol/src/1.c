@@ -7,7 +7,7 @@
 #define max(a, b) (a>b?a:b)
 
 #define SEED (0x3a7eb429)
-#define ITERATIONS_COUNT (100)
+#define ITERATIONS_COUNT (100000)
 #define SWAP(a,b,type) {type temporary_variable=a;a=b;b=temporary_variable;}
 
 size_t goi_hash(bool *field, int cols, int rows, size_t seed) {
@@ -114,7 +114,6 @@ void goi_start(bool *field, int rows, int cols) {
     memset(next_matrix, 0, sizeof(bool) * (rows + 2) * cols);
     bool *next = next_matrix + cols;
 
-
     size_t states[ITERATIONS_COUNT];
     memset(states, 0, sizeof(size_t)*ITERATIONS_COUNT);
 
@@ -123,8 +122,8 @@ void goi_start(bool *field, int rows, int cols) {
     // for parallel replace with stop_vector
     bool stop = false;
     while(!stop) {
-        memcpy(matrix,                 field + (cols-1)*rows, sizeof(bool) * cols);
-        memcpy(matrix + (cols+1)*rows, field,                 sizeof(bool) * cols);
+        memcpy(matrix,                 field + (rows-1)*cols, sizeof(bool) * cols);
+        memcpy(matrix + (rows+1)*cols, field,                 sizeof(bool) * cols);
 
         states[iteration] = goi_hash(field, cols, rows, SEED);
         goi_show(field, rows, cols);
@@ -133,7 +132,7 @@ void goi_start(bool *field, int rows, int cols) {
 
         if (stop) break;
         
-        // fprintf(stdout, "=======\n");
+        // fprintf(stdout, "===========\n");
         // goi_show(matrix, rows+2, cols);
 
         goi_std_step(matrix, rows+2, cols, next_matrix);
@@ -143,12 +142,14 @@ void goi_start(bool *field, int rows, int cols) {
         SWAP(field, next, bool*);
         SWAP(matrix, next_matrix, bool*);
 
-        printf("\n\n\n\n\n\n\n\n\n\n\n\n");
-        usleep(100000);
+        // printf("\n\n\n\n\n\n\n\n\n\n\n\n");
+        usleep(10000);
 
         ++iteration;
         if (iteration >= ITERATIONS_COUNT) stop |= true;
     }
+
+    fprintf(stdout, "Ended after %i interations\n", iteration);
 
     free(matrix);
     free(next_matrix);
