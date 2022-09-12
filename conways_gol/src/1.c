@@ -109,6 +109,8 @@ void goi_start(bool *field, int rows, int cols) {
     bool *matrix = (bool*)malloc(sizeof(bool) * (rows + 2) * cols);
     memcpy(matrix + cols, field, sizeof(bool) * rows * cols);
     field = matrix + cols;
+    memcpy(matrix,                 field + (rows-1)*cols, sizeof(bool) * cols);
+    memcpy(matrix + (rows+1)*cols, field,                 sizeof(bool) * cols);    
 
     bool *next_matrix = (bool*)malloc(sizeof(bool) * (rows + 2) * cols);
     memset(next_matrix, 0, sizeof(bool) * (rows + 2) * cols);
@@ -122,9 +124,6 @@ void goi_start(bool *field, int rows, int cols) {
     // for parallel replace with stop_vector
     bool stop = false;
     while(!stop) {
-        memcpy(matrix,                 field + (rows-1)*cols, sizeof(bool) * cols);
-        memcpy(matrix + (rows+1)*cols, field,                 sizeof(bool) * cols);
-
         states[iteration] = goi_hash(field, cols, rows, SEED);
         goi_show(field, rows, cols);
 
@@ -142,6 +141,8 @@ void goi_start(bool *field, int rows, int cols) {
         SWAP(field, next, bool*);
         SWAP(matrix, next_matrix, bool*);
 
+        memcpy(matrix,                 field + (rows-1)*cols, sizeof(bool) * cols);
+        memcpy(matrix + (rows+1)*cols, field,                 sizeof(bool) * cols);
         // printf("\n\n\n\n\n\n\n\n\n\n\n\n");
         usleep(10000);
 
