@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 
 #define max(a, b) (a>b?a:b)
 
@@ -20,7 +21,7 @@ size_t goi_hash(bool *field, int cols, int rows, size_t seed) {
     seed *= 0xee6b2807;
     seed ^= seed >> 16;
 
-    fprintf(stdout, "hash: %zu\n", seed);
+    // fprintf(stdout, "hash: %zu\n", seed);
 
     return seed;
 }
@@ -121,36 +122,40 @@ void goi_start(bool *field, int rows, int cols) {
 
     int iteration = 0;
     
-    // for parallel replace with stop_vector
+    struct timespec start;
+    clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+
     bool stop = false;
     while(!stop) {
         states[iteration] = goi_hash(field, cols, rows, SEED);
-        goi_show(field, rows, cols);
+        // goi_show(field, rows, cols);
 
-        if (goi_isrepeated(states, iteration+1)) stop |= true;
+        // if (goi_isrepeated(states, iteration+1)) stop |= true;
+        if (iteration > 0) {
+            stop = states[iteration] == states[iteration-1];
+        }
 
         if (stop) break;
         
-        // fprintf(stdout, "===========\n");
-        // goi_show(matrix, rows+2, cols);
-
         goi_std_step(matrix, rows+2, cols, next_matrix);
-        // goi_std_step(matrix, 3, cols, next_matrix);
-        // goi_std_step(matrix + (rows+1)*cols, 3, cols, next_matrix + (rows+1)*cols);
 
         SWAP(field, next, bool*);
         SWAP(matrix, next_matrix, bool*);
 
         memcpy(matrix,                 field + (rows-1)*cols, sizeof(bool) * cols);
         memcpy(matrix + (rows+1)*cols, field,                 sizeof(bool) * cols);
-        // printf("\n\n\n\n\n\n\n\n\n\n\n\n");
-        usleep(10000);
+        
+        // usleep(10000);
 
         ++iteration;
         if (iteration >= ITERATIONS_COUNT) stop |= true;
     }
+    struct timespec end;
+    clock_gettime(CLOCK_MONOTONIC_RAW, &end);
 
-    fprintf(stdout, "Ended after %i interations\n", iteration);
+    double total_time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) * 1e-9;
+
+    fprintf(stdout, "Ended after %i interations\nTotal time: %lf\n", iteration, total_time);
 
     free(matrix);
     free(next_matrix);

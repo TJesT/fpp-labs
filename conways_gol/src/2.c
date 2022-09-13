@@ -186,6 +186,7 @@ void goi_start(bool *field, int rows, int cols, field_seed_t seed) {
 
     bool stop_me = false;
 
+    double start = MPI_Wtime();
     bool stop = false;
     while(!stop) {
         states[iteration] = goi_hash(field, cols, my_rows, SEED);
@@ -241,9 +242,10 @@ void goi_start(bool *field, int rows, int cols, field_seed_t seed) {
 
         if (iteration >= ITERATIONS_COUNT) stop |= true;
     }
+    double end = MPI_Wtime();
 
     if (rank == 0) {
-        fprintf(stdout, "Ended after %i interations\n", iteration);
+        fprintf(stdout, "Ended after %i interations\nTotal time taken: %lf", iteration, end-start);
     }
 
     free(matrix);
