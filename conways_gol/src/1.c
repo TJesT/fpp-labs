@@ -5,16 +5,18 @@
 #include <unistd.h>
 #include <time.h>
 
+typedef unsigned __int128 uint128_t;
+
 #define max(a, b) (a>b?a:b)
 
 #define SEED (0x3a7eb429)
 #define ITERATIONS_COUNT (100000)
 #define SWAP(a,b,type) {type temporary_variable=a;a=b;b=temporary_variable;}
 
-size_t goi_hash(bool *field, int cols, int rows, size_t seed) {
+uint128_t goi_hash(bool *field, int cols, int rows, uint128_t seed) {
     for (int y = 0; y < rows; ++y) {
         for (int x = 0; x < cols; ++x) {
-            seed = (seed >> 1) | (seed << (sizeof(size_t) * 8 - 1));
+            seed = (seed >> 1) | (seed << (sizeof(uint128_t) * 8 - 1));
             seed ^= field[y*cols + x] * 0xee6b2807;
         }
     }
@@ -63,8 +65,8 @@ bool goi_rule(bool cell, int count) {
     return (a & ~b) | (~a & c);
 }
 
-bool goi_isrepeated(size_t *states, int len) {
-    size_t hash = states[len-1];
+bool goi_isrepeated(uint128_t *states, int len) {
+    uint128_t hash = states[len-1];
     for (int i = 0; i < len-1; ++i) {
         if (hash == states[i]) return true;
     }
@@ -117,8 +119,8 @@ void goi_start(bool *field, int rows, int cols) {
     memset(next_matrix, 0, sizeof(bool) * (rows + 2) * cols);
     bool *next = next_matrix + cols;
 
-    size_t states[ITERATIONS_COUNT];
-    memset(states, 0, sizeof(size_t)*ITERATIONS_COUNT);
+    uint128_t states[ITERATIONS_COUNT];
+    memset(states, 0, sizeof(uint128_t)*ITERATIONS_COUNT);
 
     int iteration = 0;
     
@@ -130,10 +132,10 @@ void goi_start(bool *field, int rows, int cols) {
         states[iteration] = goi_hash(field, cols, rows, SEED);
         // goi_show(field, rows, cols);
 
-        // if (goi_isrepeated(states, iteration+1)) stop |= true;
-        if (iteration > 0) {
-            stop = states[iteration] == states[iteration-1];
-        }
+        if (goi_isrepeated(states, iteration+1)) stop = true;
+        // if (iteration > 0) {
+        //     stop = states[iteration] == states[iteration-1];
+        // }
 
         if (stop) break;
         
@@ -148,14 +150,14 @@ void goi_start(bool *field, int rows, int cols) {
         // usleep(10000);
 
         ++iteration;
-        if (iteration >= ITERATIONS_COUNT) stop |= true;
+        if (iteration >= ITERATIONS_COUNT) stop = true;
     }
     struct timespec end;
     clock_gettime(CLOCK_MONOTONIC_RAW, &end);
 
     double total_time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) * 1e-9;
 
-    fprintf(stdout, "Ended after %i interations\nTotal time: %lf\n", iteration, total_time);
+    fprintf(stdout, "Ended after %i iterations\nTotal time: %lf\n", iteration, total_time);
 
     free(matrix);
     free(next_matrix);

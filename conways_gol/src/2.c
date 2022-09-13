@@ -5,16 +5,13 @@
 #include <unistd.h>
 #include <mpi.h>
 
+//typedef unsigned __int128 uint128_t;
+
 #define max(a, b) (a>b?a:b)
 
 #define SEED (0x3a7eb429)
 #define ITERATIONS_COUNT (1000000)
 #define SWAP(a,b,type) {type temporary_variable=a;a=b;b=temporary_variable;}
-
-typedef enum fseed {
-    BLOCK,
-    GLIDER
-} field_seed_t;
 
 int rank = -1, size = -1;
 
@@ -55,15 +52,15 @@ size_t goi_hash(bool *field, int cols, int rows, size_t seed) {
     seed *= 0xee6b2807;
     seed ^= seed >> 16;
 
-    // usleep(rank * 1000);
-    // fprintf(stdout, "hash: %zu\n", seed);
-    // usleep((size-rank-1) * 1000);
+    // usleep(rank * 2000);
+    // fprintf(stdout, "hash %i: %zu\n", rank, seed);
+    // usleep((size-rank-1) * 2000);
 
     return seed;
 }
 
 void goi_show(bool *field, int rows, int cols) {
-    usleep(rank * 1000);
+    usleep(rank * 2000);
     fprintf(stdout, "rank: %d\n", rank);
     for(int y = 0 ; y < rows; ++y) {
         for(int x = 0; x < cols; ++x) {
@@ -71,32 +68,20 @@ void goi_show(bool *field, int rows, int cols) {
         }
         fprintf(stdout, "\n");
     }
-    usleep((size-rank-1) * 1000);
+    usleep((size-rank-1) * 2000);
 }
 
-void goi_init(bool *field, int rows, int cols, field_seed_t seed) {
+void goi_init(bool *field, int rows, int cols) {
     if(!field) {
         fprintf(stderr, "Must allocate field first\n");
         return;
     }
 
-    switch (seed) {
-    case BLOCK:
-        field[0*cols + 0] = true;
-        field[(cols-1)*cols + rows-1] = true;
-        field[0*cols + rows-1] = true;
-        field[(cols-1)*cols + 0] = true;
-        break;
-    case GLIDER:
-        field[0*cols + 1] = true;
-        field[1*cols + 2] = true;
-        field[2*cols + 0] = true;
-        field[2*cols + 1] = true;
-        field[2*cols + 2] = true;
-        break;
-    default:
-        break;
-    }
+    field[0*cols + 1] = true;
+    field[1*cols + 2] = true;
+    field[2*cols + 0] = true;
+    field[2*cols + 1] = true;
+    field[2*cols + 2] = true;
 }
 
 bool goi_rule(bool cell, int count) {
@@ -112,7 +97,12 @@ bool goi_rule(bool cell, int count) {
 bool goi_isrepeated(size_t *states, int len) {
     size_t hash = states[len-1];
     for (int i = 0; i < len-1; ++i) {
-        if (hash == states[i]) return true;
+        if (hash == states[i]) {
+            // usleep(rank * 2000);
+            // fprintf(stdout, "repeated with %i iteration\n", i);
+            // usleep((size-rank-1) * 2000);
+            return true;
+        }
     }
 
     return false;
@@ -148,11 +138,11 @@ void goi_std_step(bool *field, int rows, int cols, bool *next) {
     goi_step(field, rows, cols, next, goi_count_neighbors);
 }
 
-void goi_start(bool *field, int rows, int cols, field_seed_t seed) {
+void goi_start(bool *field, int rows, int cols) {
     if (rank == 0) {
         fprintf(stdout, "field ptr: %p, rows: %i, cols: %i\n", field, rows, cols);
         
-        goi_init(field, rows, cols, seed);
+        goi_init(field, rows, cols);
     }
 
     int neighbor_top, neighbor_bot;
@@ -204,9 +194,10 @@ void goi_start(bool *field, int rows, int cols, field_seed_t seed) {
         MPI_Irecv(field + counts[rank], cols, MPI_C_BOOL, 
             neighbor_bot, 1, MPI_COMM_WORLD, &bot_rec_req);
 
-        if(iteration > 0) {
-            stop_me = states[iteration] == states[iteration-1];
-        }
+        stop_me = goi_isrepeated(states, iteration+1);
+        // if(iteration > 0) {
+        //     stop_me = states[iteration] == states[iteration-1];
+        // }
 
         // printf("rank: %d; %d\n", rank, stop_me);
 
@@ -245,7 +236,7 @@ void goi_start(bool *field, int rows, int cols, field_seed_t seed) {
     double end = MPI_Wtime();
 
     if (rank == 0) {
-        fprintf(stdout, "Ended after %i interations\nTotal time taken: %lf", iteration, end-start);
+        fprintf(stdout, "Ended after %i iterations\nTotal time taken: %lf\n", iteration, end-start);
     }
 
     free(matrix);
@@ -253,8 +244,8 @@ void goi_start(bool *field, int rows, int cols, field_seed_t seed) {
 }
 
 int main(int argc, char *argv[]) {
-    if (argc != 4) {
-        fprintf(stderr, "Must specify exactly 3 arguments: width, height, seed\n");
+    if (argc < 3) {
+        fprintf(stderr, "Must specify exactly 2 arguments: width, height\n");
         return 0;
     }
 
@@ -264,7 +255,6 @@ int main(int argc, char *argv[]) {
 
     int rows = strtol(argv[1], NULL, 10);
     int cols = strtol(argv[2], NULL, 10);
-    size_t seed = strtoull(argv[3], NULL, 10);
 
     rows = max(3, rows);
     cols = max(3, cols);
@@ -276,7 +266,7 @@ int main(int argc, char *argv[]) {
         memset(field, 0, rows*cols*sizeof(bool));
     }
 
-    goi_start(field, rows, cols, (field_seed_t)seed);
+    goi_start(field, rows, cols);
 
     if (rank == 0) free(field);
 
