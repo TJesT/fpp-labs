@@ -82,6 +82,18 @@ void goi_init(bool *field, int rows, int cols) {
     field[2*cols + 0] = true;
     field[2*cols + 1] = true;
     field[2*cols + 2] = true;
+
+    field[(0+5)*cols + 1] = true;
+    field[(0+5)*cols + 2] = true;
+    field[(1+5)*cols + 0] = true;
+    field[(1+5)*cols + 2] = true;
+    field[(2+5)*cols + 2] = true;
+
+    field[(0+5)*cols + 1+5] = true;
+    field[(0+5)*cols + 2+5] = true;
+    field[(1+5)*cols + 0+5] = true;
+    field[(1+5)*cols + 2+5] = true;
+    field[(2+5)*cols + 2+5] = true;
 }
 
 bool goi_rule(bool cell, int count) {
@@ -91,7 +103,7 @@ bool goi_rule(bool cell, int count) {
     // Condition if dead
     bool c = count == 3;
 
-    return (a & ~b) | (~a & c);
+    return (a && !b) || (!a && c);
 }
 
 bool goi_isrepeated(size_t *states, int len) {
@@ -99,7 +111,7 @@ bool goi_isrepeated(size_t *states, int len) {
     for (int i = 0; i < len-1; ++i) {
         if (hash == states[i]) {
             // usleep(rank * 2000);
-            // fprintf(stdout, "repeated with %i iteration\n", i);
+            // printf("rank %d; repeated with iteration %i\n", rank, i);
             // usleep((size-rank-1) * 2000);
             return true;
         }

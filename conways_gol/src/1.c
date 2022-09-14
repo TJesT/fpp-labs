@@ -43,16 +43,23 @@ void goi_init(bool *field, int rows, int cols) {
         return;
     }
 
-    // field[0*cols + 0] = true;
-    // field[(cols-1)*cols + rows-1] = true;
-    // field[0*cols + rows-1] = true;
-    // field[(cols-1)*cols + 0] = true;
-
     field[0*cols + 1] = true;
     field[1*cols + 2] = true;
     field[2*cols + 0] = true;
     field[2*cols + 1] = true;
     field[2*cols + 2] = true;
+
+    field[(0+5)*cols + 1] = true;
+    field[(0+5)*cols + 2] = true;
+    field[(1+5)*cols + 0] = true;
+    field[(1+5)*cols + 2] = true;
+    field[(2+5)*cols + 2] = true;
+
+    field[(0+5)*cols + 1+5] = true;
+    field[(0+5)*cols + 2+5] = true;
+    field[(1+5)*cols + 0+5] = true;
+    field[(1+5)*cols + 2+5] = true;
+    field[(2+5)*cols + 2+5] = true;
 }
 
 bool goi_rule(bool cell, int count) {
@@ -62,13 +69,16 @@ bool goi_rule(bool cell, int count) {
     // Condition if dead
     bool c = count == 3;
 
-    return (a & ~b) | (~a & c);
+    return (a && !b) || (!a && c);
 }
 
 bool goi_isrepeated(uint128_t *states, int len) {
     uint128_t hash = states[len-1];
     for (int i = 0; i < len-1; ++i) {
-        if (hash == states[i]) return true;
+        if (hash == states[i]) {
+            // printf("repeated with iteration %i\n", i);
+            return true;
+        }
     }
 
     return false;
